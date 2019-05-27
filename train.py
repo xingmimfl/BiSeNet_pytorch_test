@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import torch
 import torch.nn as nn
 import torchvision.transforms as transform
@@ -10,6 +11,10 @@ from config import *
 device = torch.device('cuda:%d' % device_id)
 
 def train(model, optimizer, dataloader_train):
+    start_time = time.time()
+    iter_time = start_time
+
+    loss_avg = AverageMeter()
     data_iter = iter(dataloader_train)
     for epoch in range(MAX_ITERS):
         lr = poly_lr_scheduler(optimizer, LEARNING_RATE, iter_count=epoch, max_iter=MAX_ITERS)
@@ -24,6 +29,7 @@ def train(model, optimizer, dataloader_train):
         output, output_sup1, output_sup2 = model(images)
         loss_p, loss_16, loss_32 = model.get_loss(output, output_sup1, output_sup2, masks)
         loss = loss_p + loss_16 + loss_32
+        loss_avg.update(loss.item())
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -34,6 +40,15 @@ def train(model, optimizer, dataloader_train):
             save_path = os.path.join(SNAPSHOT_PATH, save_name)
             torch.save(model, save_path)
             print("save model:\t", save_path)
+            print("[iter %d]" % epoch + " loss: %.4e" % loss_avg.val)
+            loss_avg = AverageMeter()
+
+            curr_time = time.time()
+            iter_time = curr_time
+            print(" time cost: {:f}".format(curr_time - iter_time))
+            print(' Total time used: {:f}'.format(curr_time - start_time))
+            print("")
+
 
 def poly_lr_scheduler(optimizer, init_lr, iter_count, lr_decay_iter=1,
                       max_iter=100, power=0.9):
@@ -50,6 +65,23 @@ def poly_lr_scheduler(optimizer, init_lr, iter_count, lr_decay_iter=1,
         param_group['lr'] = lr
 
     return lr
+
+class AverageMeter(object):
+    """Computes and stores the average and current value"""
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count
           
 
 if __name__=="__main__":
