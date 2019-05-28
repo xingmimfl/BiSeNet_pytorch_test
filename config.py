@@ -1,11 +1,13 @@
 
 import os
-device_id = 1
+
+DEVICE_IDS = [0, 1, 2, 3]
 CROP_SIZE = 1024
 DATA_PATH = "/media/disk1/mengfanli/data/cityscapes"
 
 RESNET_MODEL_PATH = 'resnet18-5c106cde.pth'
-BATCH_SIZE = 16
+BATCH_SIZE = 8
+NUM_WORKERS = 16
 LEARNING_RATE = 2.5e-2
 MOMENTUM = 0.9
 WEIGHT_DECAY = 1e-4

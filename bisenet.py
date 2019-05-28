@@ -3,7 +3,9 @@ import torch
 import torch.nn as nn
 from loss import OhemCELoss
 from resnet import resnet18
-from config import device_id
+from config import DEVICE_IDS
+device = torch.device("cuda:%d" % DEVICE_IDS[0])
+
 
 def conv_bn(in_channels, out_channels, kernel_size=3, stride=2, padding=1):
     return nn.Sequential(
@@ -101,9 +103,12 @@ class bisenet(nn.Module):
         self.conv = nn.Conv2d(in_channels=num_classes, out_channels=num_classes, kernel_size=1)
         self.supervision1 = nn.Conv2d(in_channels=256, out_channels=num_classes, kernel_size=1) 
         self.supervision2 = nn.Conv2d(in_channels=512, out_channels=num_classes, kernel_size=1)
-        self.criterion_p = nn.CrossEntropyLoss(ignore_index=255).to(device_id)
-        self.criterion_16 = nn.CrossEntropyLoss(ignore_index=255).to(device_id)
-        self.criterion_32 = nn.CrossEntropyLoss(ignore_index=255).to(device_id)
+        #self.criterion_p = nn.CrossEntropyLoss(ignore_index=255).cuda()
+        #self.criterion_16 = nn.CrossEntropyLoss(ignore_index=255).cuda()
+        #self.criterion_32 = nn.CrossEntropyLoss(ignore_index=255).cuda()
+        self.criterion_p = nn.CrossEntropyLoss(ignore_index=255).to(device)
+        self.criterion_16 = nn.CrossEntropyLoss(ignore_index=255).to(device)
+        self.criterion_32 = nn.CrossEntropyLoss(ignore_index=255).to(device)
 
     def forward(self, input):
         sp_x = self.sp(input)
